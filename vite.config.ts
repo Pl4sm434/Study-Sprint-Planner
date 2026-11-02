@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
   return {
+    // Configure base path for GitHub Pages repository (https://pl4sm434.github.io/Study-Sprint-Planner/)
+    base: process.env.VITE_BASE_PATH || (mode === 'production' ? '/Study-Sprint-Planner/' : '/'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname || process.cwd(), '.'),
       },
     },
     server: {
