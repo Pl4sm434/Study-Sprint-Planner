@@ -1,0 +1,6 @@
+{
+  "name": "Study Sprint Planner",
+  "description": "A self-contained daily study planner that splits assignments into 25-minute sprints using earliest-deadline-first scheduling, handles daily study limits, and saves progress locally.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

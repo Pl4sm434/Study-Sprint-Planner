@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Sprint Planner</title>
+  <meta name="description" content="A self-contained daily study planner that splits assignments into 25-minute sprints using earliest-deadline-first scheduling, handles daily study limits, and saves progress locally." />
+  <meta property="og:title" content="Study Sprint Planner" />
+  <meta property="og:description" content="A self-contained daily study planner that splits assignments into 25-minute sprints using earliest-deadline-first scheduling, handles daily study limits, and saves progress locally." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    /* -------------------------------------------------------------
+       CSS Styles - Self-contained, responsive, clean, modern
+       ------------------------------------------------------------- */
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
+      --secondary: #0f172a;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-border: #e2e8f0;
+      --surface-hover: #f1f5f9;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --danger-border: #fecaca;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --warning-border: #fde68a;
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --success-border: #a7f3d0;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Header */
+    header.app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 20px 0;
+      margin-bottom: 24px;
+    }
+
+    .header-content {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2;
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--secondary);
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Buttons */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+      min-height: 38px;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      border-color: var(--surface-border);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      border-color: #cbd5e1;
+    }
+
+    .btn-danger-outline {
+      background: var(--surface);
+      border-color: var(--danger-border);
+      color: var(--danger);
+    }
+    .btn-danger-outline:hover {
+      background: var(--danger-light);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      min-height: 30px;
+    }
+
+    .btn-icon {
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      background: transparent;
+      min-height: 32px;
+      width: 32px;
+    }
+    .btn-icon:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    /* Welcome Guide Banner for First-Time Users */
+    .welcome-guide {
+      background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+      border: 1px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .welcome-badge {
+      display: inline-block;
+      font-size: 0.725rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--primary);
+      background: rgba(79, 70, 229, 0.1);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      margin-bottom: 6px;
+    }
+
+    .welcome-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--secondary);
+      letter-spacing: -0.01em;
+    }
+
+    .welcome-subtitle {
+      font-size: 0.9rem;
+      color: #475569;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .welcome-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .welcome-feature-item {
+      background: var(--surface);
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.825rem;
+      color: #334155;
+    }
+
+    .feature-icon-wrapper {
+      font-size: 1.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .welcome-feature-item strong {
+      display: block;
+      color: var(--secondary);
+      font-size: 0.875rem;
+      margin-bottom: 3px;
+    }
+
+    .welcome-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding-top: 14px;
+      border-top: 1px solid #e0e7ff;
+    }
+
+    .btn-dismiss-welcome {
+      margin-left: auto;
+    }
+
+    /* Notice / Privacy banner */
+    .privacy-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .privacy-banner-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Layout Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 960px) {
+      .main-grid {
+        grid-template-columns: 360px 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Daily Availability Control */
+    .availability-control {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .availability-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .availability-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .availability-value-badge {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid var(--primary-border);
+    }
+
+    .availability-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip-btn {
+      padding: 6px 12px;
+      font-size: 0.825rem;
+      border-radius: 9999px;
+      border: 1px solid var(--surface-border);
+      background: var(--surface);
+      color: var(--text);
+      min-height: 32px;
+    }
+
+    .chip-btn:hover {
+      background: var(--surface-hover);
+    }
+
+    .chip-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1;
+      height: 6px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .availability-input {
+      width: 72px;
+      padding: 6px 8px;
+      font-size: 0.875rem;
+      text-align: center;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Overflow / Warning Banner */
+    .warning-banner {
+      background: var(--warning-light);
+      border: 1px solid var(--warning-border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .warning-icon {
+      color: #d97706;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .warning-title {
+      font-weight: 600;
+      color: #92400e;
+      font-size: 0.925rem;
+      margin-bottom: 4px;
+    }
+
+    .warning-desc {
+      font-size: 0.85rem;
+      color: #b45309;
+      line-height: 1.4;
+    }
+
+    .warning-list {
+      margin-top: 8px;
+      padding-left: 18px;
+      font-size: 0.85rem;
+      color: #92400e;
+    }
+
+    .warning-list li {
+      margin-bottom: 4px;
+    }
+
+    /* Focus Sprint Widget (Timer) */
+    .timer-widget {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .timer-badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .timer-display {
+      font-size: 3.2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .timer-current-task {
+      font-size: 0.875rem;
+      color: #c7d2fe;
+      margin-bottom: 14px;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .timer-btn {
+      background: #fff;
+      color: #312e81;
+      font-weight: 600;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 9999px;
+    }
+    .timer-btn:hover {
+      background: #e0e7ff;
+    }
+
+    .timer-btn-reset {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 9999px;
+    }
+    .timer-btn-reset:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Daily Plan Section */
+    .plan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 10px 0 16px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4f46e5, #10b981);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 9999px;
+    }
+
+    .sprint-stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .sprint-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sprint-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .sprint-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .sprint-card.completed {
+      background: #f8fafc;
+      opacity: 0.75;
+    }
+
+    .sprint-card.completed .sprint-task-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .sprint-checkbox {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .sprint-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sprint-task-title {
+      font-size: 0.925rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sprint-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.785rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+
+    .sprint-duration-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .sprint-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Multi-day schedule timeline */
+    .timeline-day {
+      border-left: 2px solid var(--surface-border);
+      padding-left: 16px;
+      margin-left: 8px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .timeline-day::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .timeline-day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .timeline-day-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .timeline-day-mins {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--surface-hover);
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+
+    /* Assignment Item Cards */
+    .assignment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .assignment-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .assignment-card:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: #cbd5e1;
+    }
+
+    .assignment-card.at-risk {
+      border-color: var(--warning-border);
+      background: #fffdf5;
+    }
+
+    .assignment-card.overdue {
+      border-color: var(--danger-border);
+      background: var(--danger-light);
+    }
+
+    .assignment-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .assignment-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--secondary);
+      word-break: break-word;
+    }
+
+    .assignment-card-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .subject-pill {
+      display: inline-block;
+      font-size: 0.725rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .subject-pill.math { background: #e0e7ff; color: #3730a3; }
+    .subject-pill.science { background: #dcfce7; color: #166534; }
+    .subject-pill.literature { background: #fce7f3; color: #9d174d; }
+    .subject-pill.history { background: #fef3c7; color: #92400e; }
+    .subject-pill.cs { background: #cffafe; color: #155e75; }
+    .subject-pill.default { background: #f1f5f9; color: #475569; }
+
+    .assignment-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+
+    .deadline-urgent {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .deadline-near {
+      color: #d97706;
+      font-weight: 600;
+    }
+
+    .assignment-progress-bar {
+      margin-top: 10px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .assignment-progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 9999px;
+      transition: width 0.3s ease;
+    }
+
+    /* Empty states */
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px auto;
+      color: #94a3b8;
+    }
+
+    .empty-state-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--secondary);
+      margin-bottom: 4px;
+    }
+
+    .empty-state-desc {
+      font-size: 0.85rem;
+      max-width: 360px;
+      margin: 0 auto 16px auto;
+      line-height: 1.5;
+    }
+
+    /* Modal Form */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-backdrop.open .modal-dialog {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .modal-body {
+      padding: 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--surface-border);
+      background: #fafafa;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-label .required {
+      color: var(--danger);
+      margin-left: 2px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .form-input.error {
+      border-color: var(--danger);
+      background: #fffbfb;
+    }
+
+    .form-hint {
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-error {
+      font-size: 0.775rem;
+      color: var(--danger);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .form-error.visible {
+      display: block;
+    }
+
+    .duration-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .preset-btn {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      min-height: 28px;
+    }
+
+    .preset-btn:hover {
+      background: #e2e8f0;
+    }
+
+    /* Tabs */
+    .view-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 16px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 0;
+      min-height: 38px;
+    }
+
+    .tab-btn:hover {
+      color: var(--secondary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Explainer Box */
+    .algorithm-info {
+      background: #f8fafc;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      margin-top: 24px;
+    }
+
+    .algorithm-info summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--secondary);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .algorithm-info summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .algorithm-info-content {
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    .algorithm-info-content ul {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .privacy-banner, .welcome-guide, .header-actions, .timer-widget, .view-tabs, .btn-icon, .availability-control {
+        display: none !important;
+      }
+      .container {
+        max-width: 100%;
+        padding: 0;
+      }
+      .card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container header-content">
+      <div class="brand-title">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1>Study Sprint Planner</h1>
+          <p class="tagline">Decide what to study each day with automated 25-minute sprints</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnToggleGuide" class="btn-secondary" title="View welcome guide & features">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Guide
+        </button>
+        <button id="btnTryExample" class="btn-secondary" title="Load sample student assignments">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Try an example
+        </button>
+        <button id="btnClearAll" class="btn-danger-outline" title="Clear all data and reset planner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear all data
+        </button>
+        <button id="btnOpenAddModal" class="btn-primary" title="Add a new study assignment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Assignment
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Welcome Guide Banner for First-Time Users -->
+    <section id="welcomeGuide" class="welcome-guide" style="display: none;" aria-label="Welcome and user guide">
+      <div class="welcome-header">
+        <div>
+          <div class="welcome-badge">Welcome Guide</div>
+          <h2 class="welcome-title">Take the stress out of deciding what to study</h2>
+          <p class="welcome-subtitle">
+            Study Sprint Planner solves the repetitive student dilemma of <em>"What should I study today?"</em> Enter your assignments and daily study time—the planner automatically generates a focused daily schedule so you always stay ahead of deadlines.
+          </p>
+        </div>
+        <button id="btnDismissWelcomeTop" class="btn-icon" title="Dismiss guide" aria-label="Dismiss guide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="welcome-features">
+        <div class="welcome-feature-item">
+          <div class="feature-icon-wrapper">🎯</div>
+          <div>
+            <strong>Earliest Deadline First (EDF)</strong>
+            <span>Tasks due soonest are scheduled first, ensuring urgent work is completed before starting later assignments.</span>
+          </div>
+        </div>
+
+        <div class="welcome-feature-item">
+          <div class="feature-icon-wrapper">⏱️</div>
+          <div>
+            <strong>25-Minute Focus Sprints</strong>
+            <span>Large tasks are split into bite-sized 25m Pomodoro sessions with a built-in focus timer.</span>
+          </div>
+        </div>
+
+        <div class="welcome-feature-item">
+          <div class="feature-icon-wrapper">🛡️</div>
+          <div>
+            <strong>Daily Limit &amp; Overload Alerts</strong>
+            <span>Your daily study cap is never exceeded. If work cannot fit before its due date, you are alerted immediately.</span>
+          </div>
+        </div>
+
+        <div class="welcome-feature-item">
+          <div class="feature-icon-wrapper">🔒</div>
+          <div>
+            <strong>100% Offline &amp; Private</strong>
+            <span>All assignments and progress stay safely in your browser's localStorage. No accounts or internet required.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-actions">
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--secondary);">Where to start:</span>
+        <button id="btnWelcomeAdd" class="btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Your First Assignment
+        </button>
+        <button id="btnWelcomeSample" class="btn-secondary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          Try an example
+        </button>
+        <button id="btnDismissWelcome" class="btn-secondary btn-sm btn-dismiss-welcome">
+          Got it, hide guide
+        </button>
+      </div>
+    </section>
+
+    <!-- Browser Privacy Notice -->
+    <div class="privacy-banner" role="status">
+      <div class="privacy-banner-text">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span><strong>100% Private &amp; Offline:</strong> All assignments, daily settings, and sprint progress stay securely in your browser's localStorage. No accounts or internet connection needed.</span>
+      </div>
+      <span id="localDateDisplay" style="font-size: 0.775rem; font-weight: 600; color: #475569;"></span>
+    </div>
+
+    <!-- Daily Study Availability Card -->
+    <section class="availability-control" aria-labelledby="heading-availability">
+      <div class="availability-header">
+        <div>
+          <h2 id="heading-availability">Daily Study Availability</h2>
+          <p style="font-size: 0.825rem; color: var(--text-muted);">How many minutes can you realistically dedicate to studying each day?</p>
+        </div>
+        <div class="availability-value-badge" id="availabilityBadge">100 min / day</div>
+      </div>
+
+      <div class="availability-chips" role="group" aria-label="Quick daily minutes choices">
+        <button type="button" class="chip-btn" data-val="50">50 min (2 sprints)</button>
+        <button type="button" class="chip-btn" data-val="75">75 min (3 sprints)</button>
+        <button type="button" class="chip-btn active" data-val="100">100 min (4 sprints)</button>
+        <button type="button" class="chip-btn" data-val="125">125 min (5 sprints)</button>
+        <button type="button" class="chip-btn" data-val="150">150 min (6 sprints)</button>
+        <button type="button" class="chip-btn" data-val="200">200 min (8 sprints)</button>
+      </div>
+
+      <div class="slider-container">
+        <label for="availabilityRange" style="font-size: 0.8rem; color: var(--text-muted); width: 48px;">25m</label>
+        <input type="range" id="availabilityRange" min="25" max="360" step="5" value="100" aria-label="Daily study availability in minutes" />
+        <label for="availabilityInput" style="font-size: 0.8rem; color: var(--text-muted); width: 48px; text-align: right;">360m</label>
+        <input type="number" id="availabilityInput" class="availability-input" min="5" max="720" value="100" aria-label="Exact daily minutes" />
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">mins</span>
+      </div>
+    </section>
+
+    <!-- Overflow & Deadline Constraints Warning Banner -->
+    <div id="overflowWarning" class="warning-banner" style="display: none;" role="alert">
+      <div class="warning-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </div>
+      <div>
+        <div class="warning-title">Schedule Constraint Warning: Some Work Cannot Fit Before Deadline!</div>
+        <div class="warning-desc">
+          Based on your daily limit and deadlines, the following work exceeds available time before its due date. Increase your daily study minutes, complete sprints today, or adjust assignment deadlines:
+        </div>
+        <ul id="overflowList" class="warning-list"></ul>
+      </div>
+    </div>
+
+    <!-- Main 2-Column Responsive Layout -->
+    <div class="main-grid">
+      <!-- Left Column: Focus Timer & Assignments List -->
+      <aside>
+        <!-- 25-Min Sprint Timer Widget -->
+        <div class="timer-widget">
+          <div class="timer-badge" id="timerBadgeText">25-Minute Focus Sprint</div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-current-task" id="timerTaskTitle">Select a sprint or start session</div>
+          <div class="timer-controls">
+            <button id="btnTimerToggle" class="timer-btn">
+              <svg id="timerPlayIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="timerBtnLabel">Start Sprint</span>
+            </button>
+            <button id="btnTimerReset" class="timer-btn-reset" title="Reset timer to 25:00">Reset</button>
+          </div>
+        </div>
+
+        <!-- Assignments Section -->
+        <div class="card">
+          <div class="card-title">
+            <span>All Assignments (<span id="assignmentCount">0</span>)</span>
+            <button id="btnQuickAdd" class="btn-primary btn-sm" title="Add assignment">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add
+            </button>
+          </div>
+
+          <div id="assignmentList" class="assignment-list">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Empty state for assignments -->
+          <div id="assignmentEmptyState" class="empty-state" style="display: none;">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <h3 class="empty-state-title">Ready to organize your study time?</h3>
+            <p class="empty-state-desc">No assignments added yet. Add your schoolwork with due dates, or load sample tasks to see how sprint planning works.</p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <button id="btnEmptyAdd" class="btn-primary btn-sm">Add First Assignment</button>
+              <button id="btnEmptyExample" class="btn-secondary btn-sm">Try an example</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Daily Plan & Schedule Views -->
+      <section>
+        <!-- View Tabs: Today's Plan vs Multi-Day Schedule -->
+        <nav class="view-tabs" role="tablist">
+          <button class="tab-btn active" id="tabToday" role="tab" aria-selected="true" aria-controls="viewToday">
+            Today's Sprint Plan
+          </button>
+          <button class="tab-btn" id="tabTimeline" role="tab" aria-selected="false" aria-controls="viewTimeline">
+            Upcoming Schedule (Next 7 Days)
+          </button>
+        </nav>
+
+        <!-- View 1: Today's Plan -->
+        <div id="viewToday" role="tabpanel" aria-labelledby="tabToday">
+          <div class="card">
+            <div class="plan-header">
+              <div>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--secondary);">Today's Focus Sprints</h2>
+                <p style="font-size: 0.825rem; color: var(--text-muted);">
+                  Split into max 25-minute sprints, ordered by earliest deadline.
+                </p>
+              </div>
+              <div id="todayCapIndicator" style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">
+                0 / 100 min planned
+              </div>
+            </div>
+
+            <!-- Today's Progress Bar -->
+            <div>
+              <div class="progress-bar-container">
+                <div id="todayProgressFill" class="progress-bar-fill"></div>
+              </div>
+              <div class="sprint-stats-row">
+                <span id="todayProgressText">0 / 0 sprints completed</span>
+                <span id="todayCompletionPercent">0%</span>
+              </div>
+            </div>
+
+            <!-- Sprint list container -->
+            <div id="todaySprintList" class="sprint-list">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Empty state for today's sprints -->
+            <div id="todayEmptyState" class="empty-state" style="display: none;">
+              <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 12l2 2 4-4"></path>
+              </svg>
+              <h3 class="empty-state-title" id="todayEmptyTitle">No study sessions scheduled for today</h3>
+              <p class="empty-state-desc" id="todayEmptyDesc">Add assignments or click "Try an example" to generate today's sprints.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- View 2: Multi-Day Timeline -->
+        <div id="viewTimeline" role="tabpanel" aria-labelledby="tabTimeline" style="display: none;">
+          <div class="card">
+            <div class="plan-header">
+              <div>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--secondary);">Upcoming Multi-Day Schedule</h2>
+                <p style="font-size: 0.825rem; color: var(--text-muted);">
+                  See how remaining work is distributed across upcoming days within your daily limits.
+                </p>
+              </div>
+            </div>
+
+            <div id="multiDayScheduleList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Explainer Accordion -->
+        <details class="algorithm-info">
+          <summary>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            How the Study Sprint Planner scheduling works
+          </summary>
+          <div class="algorithm-info-content">
+            <p>The planner automates student decision-making using an Earliest-Deadline-First (EDF) algorithm with strict Pomodoro slicing:</p>
+            <ul>
+              <li><strong>Earliest Deadline First (EDF):</strong> Assignments closest to their deadline are scheduled first to prevent last-minute cramming.</li>
+              <li><strong>25-Minute Sprints:</strong> Study time is divided into focused sessions of up to 25 minutes. A 60-minute task is cleanly split into 25m + 25m + 10m blocks.</li>
+              <li><strong>Daily Availability Cap:</strong> Today's total scheduled time will never exceed your chosen daily study limit. Excess work flows to tomorrow.</li>
+              <li><strong>Strict Deadline Enforcement:</strong> Work is never scheduled after an assignment's due date.</li>
+              <li><strong>Overcapacity Alerts:</strong> If the total work required before a deadline exceeds what your daily limits can fit, the app flags it in the warning banner so you know immediately.</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <!-- Add / Edit Assignment Modal Dialog -->
+  <div id="assignmentModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Assignment</h3>
+        <button id="btnCloseModal" class="btn-icon" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="assignmentForm" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="editAssignmentId" value="" />
+
+          <!-- Title -->
+          <div class="form-group">
+            <label for="formTitle" class="form-label">Assignment Title <span class="required">*</span></label>
+            <input type="text" id="formTitle" class="form-input" placeholder="e.g. Chapter 4 Chemistry Problem Set" required />
+            <div id="titleError" class="form-error">Please enter an assignment title.</div>
+          </div>
+
+          <!-- Subject -->
+          <div class="form-group">
+            <label for="formSubject" class="form-label">Subject</label>
+            <select id="formSubject" class="form-select">
+              <option value="Math">Mathematics</option>
+              <option value="Science">Science (Biology / Chem / Physics)</option>
+              <option value="Literature">Literature &amp; Languages</option>
+              <option value="History">Social Studies &amp; History</option>
+              <option value="CS">Computer Science &amp; Engineering</option>
+              <option value="Other">General / Other</option>
+            </select>
+          </div>
+
+          <!-- Due Date -->
+          <div class="form-group">
+            <label for="formDueDate" class="form-label">Due Date <span class="required">*</span></label>
+            <input type="date" id="formDueDate" class="form-input" required />
+            <div class="form-hint">Must be today or a future date in your local time.</div>
+            <div id="dateError" class="form-error">Due date cannot be in the past.</div>
+          </div>
+
+          <!-- Estimated Minutes -->
+          <div class="form-group">
+            <label for="formMinutes" class="form-label">Estimated Study Time (minutes) <span class="required">*</span></label>
+            <input type="number" id="formMinutes" class="form-input" min="5" max="1440" step="5" placeholder="e.g. 75" required />
+            <div class="duration-presets" aria-label="Quick duration presets">
+              <button type="button" class="preset-btn" data-add="25">25 min (1 sprint)</button>
+              <button type="button" class="preset-btn" data-add="50">50 min (2 sprints)</button>
+              <button type="button" class="preset-btn" data-add="75">75 min (3 sprints)</button>
+              <button type="button" class="preset-btn" data-add="100">100 min (4 sprints)</button>
+              <button type="button" class="preset-btn" data-add="150">150 min</button>
+            </div>
+            <div id="minutesError" class="form-error">Duration must be a positive integer greater than zero.</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCancelModal" class="btn-secondary">Cancel</button>
+          <button type="submit" id="btnSaveAssignment" class="btn-primary">Save Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Clear All Confirmation Modal -->
+  <div id="confirmModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-dialog" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="confirmTitle" style="color: var(--danger);">Clear All Planner Data?</h3>
+        <button id="btnCloseConfirmModal" class="btn-icon" aria-label="Close dialog">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text);">
+          This will delete all assignments, your completed sprint progress, and reset your daily availability. This cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnCancelConfirm" class="btn-secondary">Cancel</button>
+        <button type="button" id="btnExecuteClearAll" class="btn-primary" style="background: var(--danger); border-color: var(--danger);">
+          Yes, Clear Everything
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single Embedded JavaScript Application Logic -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* -------------------------------------------------------------
+         Data Models & Storage
+         ------------------------------------------------------------- */
+      const STORAGE_KEY = 'study_sprint_planner_v1';
+      const WELCOME_KEY = 'study_sprint_welcome_dismissed_v1';
+
+      // State object
+      let state = {
+        dailyAvailability: 100, // minutes per day
+        assignments: [],
+        completedSprints: {}, // key: "assignmentId-sprintIndex" -> true
+        activeTimer: {
+          running: false,
+          remainingSeconds: 25 * 60,
+          currentSprintKey: null,
+          taskName: '25-minute sprint'
+        }
+      };
+
+      let timerInterval = null;
+
+      /* Helper: get user's local date string formatted as YYYY-MM-DD */
+      function getLocalDateString(offsetDays = 0) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      /* Helper: format YYYY-MM-DD for friendly human display in local timezone */
+      function formatDisplayDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        const target = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        
+        const todayStr = getLocalDateString(0);
+        const tomorrowStr = getLocalDateString(1);
+
+        if (dateStr === todayStr) {
+          return 'Today (' + target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ')';
+        } else if (dateStr === tomorrowStr) {
+          return 'Tomorrow (' + target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ')';
+        } else {
+          return target.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+      }
+
+      /* Days difference between today and given YYYY-MM-DD in local time */
+      function getDaysUntil(dateStr) {
+        const todayStr = getLocalDateString(0);
+        const p1 = todayStr.split('-').map(Number);
+        const p2 = dateStr.split('-').map(Number);
+        const d1 = new Date(p1[0], p1[1] - 1, p1[2]);
+        const d2 = new Date(p2[0], p2[1] - 1, p2[2]);
+        const diffMs = d2 - d1;
+        return Math.round(diffMs / (1000 * 60 * 60 * 24));
+      }
+
+      /* Load data from localStorage */
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (typeof parsed.dailyAvailability === 'number' && parsed.dailyAvailability > 0) {
+              state.dailyAvailability = parsed.dailyAvailability;
+            }
+            if (Array.isArray(parsed.assignments)) {
+              state.assignments = parsed.assignments;
+            }
+            if (parsed.completedSprints && typeof parsed.completedSprints === 'object') {
+              state.completedSprints = parsed.completedSprints;
+            }
+          }
+        } catch (e) {
+          // Graceful fallback to default state
+        }
+      }
+
+      /* Save data to localStorage */
+      function saveState() {
+        try {
+          const payload = {
+            dailyAvailability: state.dailyAvailability,
+            assignments: state.assignments,
+            completedSprints: state.completedSprints
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {
+          // Silent fallback if storage is restricted
+        }
+      }
+
+      /* -------------------------------------------------------------
+         Earliest-Deadline-First (EDF) Slicing & Scheduling Algorithm
+         ------------------------------------------------------------- */
+      function computeSchedule() {
+        const todayStr = getLocalDateString(0);
+
+        // 1. Prepare assignment work units
+        // For each assignment, split its total minutes into sessions of <= 25 min.
+        // Also note how many minutes have already been completed via checked sprints.
+        const assignmentWork = state.assignments.map(a => {
+          const totalMins = a.estimatedMinutes;
+          const sprints = [];
+          let rem = totalMins;
+          let idx = 0;
+
+          while (rem > 0) {
+            const sprintDur = Math.min(25, rem);
+            const key = `${a.id}-${idx}`;
+            const isDone = !!state.completedSprints[key];
+            sprints.push({
+              index: idx,
+              key: key,
+              assignmentId: a.id,
+              assignmentTitle: a.title,
+              subject: a.subject,
+              dueDate: a.dueDate,
+              duration: sprintDur,
+              completed: isDone
+            });
+            rem -= sprintDur;
+            idx++;
+          }
+
+          const completedMins = sprints
+            .filter(s => s.completed)
+            .reduce((acc, s) => acc + s.duration, 0);
+
+          return {
+            ...a,
+            sprints: sprints,
+            completedMinutes: completedMins,
+            remainingMinutes: Math.max(0, totalMins - completedMins),
+            daysUntilDue: getDaysUntil(a.dueDate)
+          };
+        });
+
+        // 2. Sort by Earliest Deadline First (EDF)
+        // If deadlines are equal, larger remaining minutes first, then title
+        const sortedAssignments = [...assignmentWork].sort((a, b) => {
+          if (a.dueDate < b.dueDate) return -1;
+          if (a.dueDate > b.dueDate) return 1;
+          return b.remainingMinutes - a.remainingMinutes || a.title.localeCompare(b.title);
+        });
+
+        // 3. Multi-day simulation (from Day 0 / Today up to Day 14 or latest deadline)
+        // Track unscheduled work (overflow) when work cannot fit before deadline.
+        const dailyPlans = {}; // dayOffset -> { dateStr, label, sprints: [], totalMinutes: 0 }
+        const maxDaysToPlan = 14;
+
+        for (let d = 0; d <= maxDaysToPlan; d++) {
+          const dStr = getLocalDateString(d);
+          dailyPlans[d] = {
+            dayOffset: d,
+            dateStr: dStr,
+            label: formatDisplayDate(dStr),
+            sprints: [],
+            totalMinutes: 0
+          };
+        }
+
+        const unscheduledOverflow = []; // { assignment, minutesLeft, reason }
+
+        // We simulate scheduling pending (uncompleted) sprints
+        sortedAssignments.forEach(a => {
+          const pendingSprints = a.sprints.filter(s => !s.completed);
+          if (pendingSprints.length === 0) return;
+
+          let sprintPtr = 0;
+          let currentDay = 0;
+
+          while (sprintPtr < pendingSprints.length) {
+            const sprint = pendingSprints[sprintPtr];
+            const sprintDueOffset = getDaysUntil(sprint.dueDate);
+
+            // If assignment is already past due (deadline < today), it cannot fit into legitimate schedule
+            if (sprintDueOffset < 0) {
+              const remainingForTask = pendingSprints.slice(sprintPtr).reduce((acc, s) => acc + s.duration, 0);
+              unscheduledOverflow.push({
+                assignmentId: a.id,
+                title: a.title,
+                dueDate: a.dueDate,
+                minutes: remainingForTask,
+                reason: `Past deadline (${a.dueDate}). Deadline has already passed in your local time.`
+              });
+              break;
+            }
+
+            // Find next available day <= sprintDueOffset where dailyAvailability is not exceeded
+            let scheduled = false;
+            while (currentDay <= sprintDueOffset && currentDay <= maxDaysToPlan) {
+              const dayPlan = dailyPlans[currentDay];
+              const remainingDailyCap = state.dailyAvailability - dayPlan.totalMinutes;
+
+              if (remainingDailyCap >= sprint.duration) {
+                // Sprints can fit fully on this day!
+                dayPlan.sprints.push(sprint);
+                dayPlan.totalMinutes += sprint.duration;
+                scheduled = true;
+                sprintPtr++;
+                break;
+              } else if (remainingDailyCap > 0 && remainingDailyCap >= 10 && sprintPtr === pendingSprints.length - 1) {
+                // If this is the last sprint and can squeeze into remaining cap, we can fit
+                dayPlan.sprints.push(sprint);
+                dayPlan.totalMinutes += sprint.duration;
+                scheduled = true;
+                sprintPtr++;
+                break;
+              } else {
+                // Day is full; advance to next day
+                currentDay++;
+              }
+            }
+
+            // If we exceeded the deadline offset without scheduling this sprint:
+            if (!scheduled) {
+              const remainingUnscheduled = pendingSprints.slice(sprintPtr).reduce((acc, s) => acc + s.duration, 0);
+              unscheduledOverflow.push({
+                assignmentId: a.id,
+                title: a.title,
+                dueDate: a.dueDate,
+                minutes: remainingUnscheduled,
+                reason: `Cannot fit ${remainingUnscheduled} min before ${formatDisplayDate(a.dueDate)} with your ${state.dailyAvailability} min/day limit.`
+              });
+              break; // Cannot schedule further sprints for this task before deadline
+            }
+          }
+        });
+
+        // Today's plan is day 0
+        // We also want today's view to include ANY sprints marked completed today
+        const completedToday = [];
+        assignmentWork.forEach(a => {
+          a.sprints.forEach(s => {
+            if (s.completed) {
+              completedToday.push(s);
+            }
+          });
+        });
+
+        return {
+          assignmentWork,
+          dailyPlans,
+          todayPlan: dailyPlans[0],
+          completedSprintsList: completedToday,
+          overflow: unscheduledOverflow
+        };
+      }
+
+      /* -------------------------------------------------------------
+         UI Rendering
+         ------------------------------------------------------------- */
+      const welcomeGuide = document.getElementById('welcomeGuide');
+      const elLocalDateDisplay = document.getElementById('localDateDisplay');
+      const elAvailabilityBadge = document.getElementById('availabilityBadge');
+      const elAvailabilityRange = document.getElementById('availabilityRange');
+      const elAvailabilityInput = document.getElementById('availabilityInput');
+      const elOverflowWarning = document.getElementById('overflowWarning');
+      const elOverflowList = document.getElementById('overflowList');
+      const elAssignmentCount = document.getElementById('assignmentCount');
+      const elAssignmentList = document.getElementById('assignmentList');
+      const elAssignmentEmpty = document.getElementById('assignmentEmptyState');
+      const elTodaySprintList = document.getElementById('todaySprintList');
+      const elTodayEmptyState = document.getElementById('todayEmptyState');
+      const elTodayEmptyTitle = document.getElementById('todayEmptyTitle');
+      const elTodayEmptyDesc = document.getElementById('todayEmptyDesc');
+      const elTodayCapIndicator = document.getElementById('todayCapIndicator');
+      const elTodayProgressFill = document.getElementById('todayProgressFill');
+      const elTodayProgressText = document.getElementById('todayProgressText');
+      const elTodayCompletionPercent = document.getElementById('todayCompletionPercent');
+      const elMultiDayScheduleList = document.getElementById('multiDayScheduleList');
+
+      // Modals
+      const modalBackdrop = document.getElementById('assignmentModalBackdrop');
+      const confirmBackdrop = document.getElementById('confirmModalBackdrop');
+      const form = document.getElementById('assignmentForm');
+      const modalTitle = document.getElementById('modalTitle');
+      const editIdInput = document.getElementById('editAssignmentId');
+      const titleInput = document.getElementById('formTitle');
+      const subjectInput = document.getElementById('formSubject');
+      const dateInput = document.getElementById('formDueDate');
+      const minutesInput = document.getElementById('formMinutes');
+      const titleError = document.getElementById('titleError');
+      const dateError = document.getElementById('dateError');
+      const minutesError = document.getElementById('minutesError');
+
+      // Timer elements
+      const elTimerDisplay = document.getElementById('timerDisplay');
+      const elTimerTaskTitle = document.getElementById('timerTaskTitle');
+      const elBtnTimerToggle = document.getElementById('btnTimerToggle');
+      const elBtnTimerReset = document.getElementById('btnTimerReset');
+      const elTimerBtnLabel = document.getElementById('timerBtnLabel');
+      const elTimerBadgeText = document.getElementById('timerBadgeText');
+
+      function updateUI() {
+        const scheduleData = computeSchedule();
+
+        // 1. Update Date Header
+        const now = new Date();
+        elLocalDateDisplay.textContent = 'Local Time: ' + now.toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
+        // 2. Update Availability display
+        elAvailabilityBadge.textContent = `${state.dailyAvailability} min / day`;
+        elAvailabilityRange.value = state.dailyAvailability;
+        elAvailabilityInput.value = state.dailyAvailability;
+
+        // Highlight active availability chip
+        document.querySelectorAll('.chip-btn').forEach(btn => {
+          if (parseInt(btn.getAttribute('data-val'), 10) === state.dailyAvailability) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        // 3. Overflow warnings
+        if (scheduleData.overflow.length > 0) {
+          elOverflowWarning.style.display = 'flex';
+          elOverflowList.innerHTML = scheduleData.overflow.map(item => `
+            <li>
+              <strong>${escapeHtml(item.title)}:</strong> ${escapeHtml(item.reason)}
+            </li>
+          `).join('');
+        } else {
+          elOverflowWarning.style.display = 'none';
+          elOverflowList.innerHTML = '';
+        }
+
+        // 4. Assignments List
+        elAssignmentCount.textContent = scheduleData.assignmentWork.length;
+        if (scheduleData.assignmentWork.length === 0) {
+          elAssignmentList.innerHTML = '';
+          elAssignmentEmpty.style.display = 'block';
+        } else {
+          elAssignmentEmpty.style.display = 'none';
+          renderAssignmentCards(scheduleData.assignmentWork, scheduleData.overflow);
+        }
+
+        // 5. Today's Plan View
+        renderTodayPlan(scheduleData);
+
+        // 6. Multi-day Timeline View
+        renderTimeline(scheduleData);
+      }
+
+      /* Render Assignment Cards */
+      function renderAssignmentCards(assignments, overflowList) {
+        const overflowIds = new Set(overflowList.map(o => o.assignmentId));
+
+        elAssignmentList.innerHTML = assignments.map(a => {
+          const isAtRisk = overflowIds.has(a.id);
+          const isOverdue = a.daysUntilDue < 0;
+          const subjectClass = getSubjectClass(a.subject);
+          const pct = Math.round((a.completedMinutes / a.estimatedMinutes) * 100) || 0;
+
+          let badgeHtml = '';
+          if (isOverdue) {
+            badgeHtml = `<span class="deadline-badge deadline-urgent">⚠️ Overdue (${a.dueDate})</span>`;
+          } else if (a.daysUntilDue === 0) {
+            badgeHtml = `<span class="deadline-badge deadline-urgent">Due Today</span>`;
+          } else if (a.daysUntilDue === 1) {
+            badgeHtml = `<span class="deadline-badge deadline-near">Due Tomorrow</span>`;
+          } else {
+            badgeHtml = `<span class="deadline-badge">Due in ${a.daysUntilDue} days (${formatDisplayDate(a.dueDate)})</span>`;
+          }
+
+          return `
+            <article class="assignment-card ${isOverdue ? 'overdue' : (isAtRisk ? 'at-risk' : '')}" data-id="${a.id}">
+              <div class="assignment-card-header">
+                <div>
+                  <span class="subject-pill ${subjectClass}">${escapeHtml(a.subject)}</span>
+                  <h4 class="assignment-title" style="margin-top: 4px;">${escapeHtml(a.title)}</h4>
+                </div>
+                <div class="assignment-card-actions">
+                  <button class="btn-icon btn-edit-assignment" data-id="${a.id}" title="Edit assignment" aria-label="Edit ${escapeHtml(a.title)}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button class="btn-icon btn-delete-assignment" data-id="${a.id}" title="Delete assignment" aria-label="Delete ${escapeHtml(a.title)}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="assignment-meta-row">
+                ${badgeHtml}
+                <span>⏱️ ${a.completedMinutes} / ${a.estimatedMinutes} min (${pct}%)</span>
+                <span>• ${a.sprints.length} sprints</span>
+              </div>
+
+              ${isAtRisk ? `
+                <div style="font-size: 0.775rem; color: #b45309; margin-top: 6px; font-weight: 500;">
+                  ⚠️ Work cannot fit before deadline under current daily study limit.
+                </div>
+              ` : ''}
+
+              <div class="assignment-progress-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+                <div class="assignment-progress-fill" style="width: ${pct}%;"></div>
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        // Attach action listeners
+        elAssignmentList.querySelectorAll('.btn-edit-assignment').forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(btn.getAttribute('data-id')));
+        });
+
+        elAssignmentList.querySelectorAll('.btn-delete-assignment').forEach(btn => {
+          btn.addEventListener('click', () => deleteAssignment(btn.getAttribute('data-id')));
+        });
+      }
+
+      /* Render Today's Sprints */
+      function renderTodayPlan(scheduleData) {
+        const todayPlan = scheduleData.todayPlan;
+        const scheduledPending = todayPlan.sprints;
+        
+        // Find all completed sprints
+        const allCompletedSprints = [];
+        scheduleData.assignmentWork.forEach(a => {
+          a.sprints.forEach(s => {
+            if (s.completed) allCompletedSprints.push(s);
+          });
+        });
+
+        // Total sprints for today display: completed + scheduled today
+        const completedTodayMinutes = allCompletedSprints.reduce((sum, s) => sum + s.duration, 0);
+        const totalTodaySprints = allCompletedSprints.length + scheduledPending.length;
+        const completedSprintsCount = allCompletedSprints.length;
+
+        const progressPercent = totalTodaySprints > 0 
+          ? Math.min(100, Math.round((completedSprintsCount / totalTodaySprints) * 100))
+          : (scheduleData.assignmentWork.length > 0 ? 100 : 0);
+
+        elTodayCapIndicator.textContent = `${scheduledPending.reduce((sum, s) => sum + s.duration, 0)} min queued / ${state.dailyAvailability} min limit`;
+        elTodayProgressFill.style.width = `${progressPercent}%`;
+        elTodayProgressText.textContent = `${completedSprintsCount} of ${totalTodaySprints} sprints finished (${completedTodayMinutes} min completed)`;
+        elTodayCompletionPercent.textContent = `${progressPercent}%`;
+
+        // Check if no sprints
+        if (totalTodaySprints === 0) {
+          elTodaySprintList.innerHTML = '';
+          elTodayEmptyState.style.display = 'block';
+          if (scheduleData.assignmentWork.length === 0) {
+            elTodayEmptyTitle.textContent = 'No study sessions scheduled for today';
+            elTodayEmptyDesc.textContent = 'Add your assignments or click "Try an example" to auto-generate today\'s sprints.';
+          } else {
+            elTodayEmptyTitle.textContent = 'All caught up for today! 🎉';
+            elTodayEmptyDesc.textContent = 'You have completed all planned sprints or have no tasks due soon. Great work!';
+          }
+          return;
+        }
+
+        elTodayEmptyState.style.display = 'none';
+
+        // Render pending sprints, followed by completed sprints
+        const combinedList = [...scheduledPending, ...allCompletedSprints];
+
+        elTodaySprintList.innerHTML = combinedList.map(s => {
+          const subjectClass = getSubjectClass(s.subject);
+          return `
+            <div class="sprint-card ${s.completed ? 'completed' : ''}" data-key="${s.key}">
+              <input type="checkbox" 
+                     class="sprint-checkbox" 
+                     data-key="${s.key}" 
+                     ${s.completed ? 'checked' : ''} 
+                     aria-label="Mark sprint for ${escapeHtml(s.assignmentTitle)} as ${s.completed ? 'incomplete' : 'complete'}" />
+              
+              <div class="sprint-info">
+                <div class="sprint-task-title">
+                  <span>${escapeHtml(s.assignmentTitle)}</span>
+                  <span class="subject-pill ${subjectClass}">${escapeHtml(s.subject)}</span>
+                  <span class="sprint-duration-badge">${s.duration} min sprint</span>
+                </div>
+                <div class="sprint-meta">
+                  <span>📅 Due ${formatDisplayDate(s.dueDate)}</span>
+                  <span>• Sprint #${s.index + 1}</span>
+                  ${s.completed ? '<span style="color: var(--success); font-weight: 600;">✓ Completed</span>' : ''}
+                </div>
+              </div>
+
+              <div class="sprint-actions">
+                ${!s.completed ? `
+                  <button class="btn-secondary btn-sm btn-start-sprint" data-key="${s.key}" data-title="${escapeHtml(s.assignmentTitle)} (${s.duration}m)" data-mins="${s.duration}" title="Start 25m Pomodoro for this sprint">
+                    ▶ Focus
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Event listener for sprint completion toggles
+        elTodaySprintList.querySelectorAll('.sprint-checkbox').forEach(chk => {
+          chk.addEventListener('change', (e) => {
+            const key = e.target.getAttribute('data-key');
+            if (e.target.checked) {
+              state.completedSprints[key] = true;
+              playSoftTone(true);
+            } else {
+              delete state.completedSprints[key];
+            }
+            saveState();
+            updateUI();
+          });
+        });
+
+        // Event listener for starting focus timer on sprint
+        elTodaySprintList.querySelectorAll('.btn-start-sprint').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const key = btn.getAttribute('data-key');
+            const title = btn.getAttribute('data-title');
+            const mins = parseInt(btn.getAttribute('data-mins'), 10) || 25;
+            setTimerForSprint(key, title, mins);
+          });
+        });
+      }
+
+      /* Render Multi-Day Timeline */
+      function renderTimeline(scheduleData) {
+        const plans = scheduleData.dailyPlans;
+        let html = '';
+
+        for (let d = 0; d <= 7; d++) {
+          const day = plans[d];
+          if (!day) continue;
+
+          const isToday = d === 0;
+          const sprints = day.sprints;
+
+          html += `
+            <div class="timeline-day">
+              <div class="timeline-day-header">
+                <div class="timeline-day-title">
+                  ${isToday ? '⭐ Today' : day.label}
+                  ${isToday ? '<span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-left: 6px;">(Current Sprint Day)</span>' : ''}
+                </div>
+                <div class="timeline-day-mins">
+                  ${day.totalMinutes} / ${state.dailyAvailability} min planned (${sprints.length} sprints)
+                </div>
+              </div>
+
+              ${sprints.length === 0 ? `
+                <div style="font-size: 0.825rem; color: var(--text-muted); font-style: italic; padding: 4px 0 8px 0;">
+                  No sprints scheduled for this day.
+                </div>
+              ` : `
+                <div class="sprint-list" style="margin-top: 8px;">
+                  ${sprints.map(s => {
+                    const subjectClass = getSubjectClass(s.subject);
+                    return `
+                      <div class="sprint-card" style="padding: 8px 12px;">
+                        <div class="sprint-info">
+                          <div class="sprint-task-title" style="font-size: 0.85rem;">
+                            <span>${escapeHtml(s.assignmentTitle)}</span>
+                            <span class="subject-pill ${subjectClass}" style="font-size: 0.675rem;">${escapeHtml(s.subject)}</span>
+                            <span class="sprint-duration-badge" style="font-size: 0.7rem;">${s.duration}m</span>
+                          </div>
+                          <div class="sprint-meta">
+                            <span>Deadline: ${formatDisplayDate(s.dueDate)}</span>
+                            <span>• Sprint #${s.index + 1}</span>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `}
+            </div>
+          `;
+        }
+
+        elMultiDayScheduleList.innerHTML = html;
+      }
+
+      /* -------------------------------------------------------------
+         Timer Functionality (Built-in 25-Min Sprint Pomodoro)
+         ------------------------------------------------------------- */
+      function setTimerForSprint(key, title, mins) {
+        pauseTimer();
+        state.activeTimer.currentSprintKey = key;
+        state.activeTimer.taskName = title;
+        state.activeTimer.remainingSeconds = mins * 60;
+        elTimerTaskTitle.textContent = title;
+        elTimerBadgeText.textContent = `${mins}-Minute Sprint`;
+        updateTimerDisplay();
+        startTimer();
+
+        // Scroll smoothly to timer widget on mobile
+        document.querySelector('.timer-widget').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      function updateTimerDisplay() {
+        const sec = state.activeTimer.remainingSeconds;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        elTimerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        state.activeTimer.running = true;
+        elTimerBtnLabel.textContent = 'Pause';
+        elBtnTimerToggle.style.background = '#fef08a';
+        elBtnTimerToggle.style.color = '#854d0e';
+
+        timerInterval = setInterval(() => {
+          if (state.activeTimer.remainingSeconds > 0) {
+            state.activeTimer.remainingSeconds--;
+            updateTimerDisplay();
+          } else {
+            // Timer completed!
+            pauseTimer();
+            playSoftTone(true);
+            if (state.activeTimer.currentSprintKey) {
+              state.completedSprints[state.activeTimer.currentSprintKey] = true;
+              saveState();
+              updateUI();
+            }
+            alert(`🎉 Great job! You finished your study sprint: ${state.activeTimer.taskName}`);
+            resetTimer();
+          }
+        }, 1000);
+      }
+
+      function pauseTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        state.activeTimer.running = false;
+        elTimerBtnLabel.textContent = 'Start Sprint';
+        elBtnTimerToggle.style.background = '#fff';
+        elBtnTimerToggle.style.color = '#312e81';
+      }
+
+      function resetTimer() {
+        pauseTimer();
+        state.activeTimer.remainingSeconds = 25 * 60;
+        state.activeTimer.currentSprintKey = null;
+        state.activeTimer.taskName = '25-minute sprint';
+        elTimerTaskTitle.textContent = 'Select a sprint or start session';
+        elTimerBadgeText.textContent = '25-Minute Focus Sprint';
+        updateTimerDisplay();
+      }
+
+      elBtnTimerToggle.addEventListener('click', () => {
+        if (state.activeTimer.running) {
+          pauseTimer();
+        } else {
+          startTimer();
+        }
+      });
+
+      elBtnTimerReset.addEventListener('click', () => {
+        resetTimer();
+      });
+
+      /* -------------------------------------------------------------
+         Web Audio Notification (100% Offline, No External Assets)
+         ------------------------------------------------------------- */
+      function playSoftTone(isSuccess = true) {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = 'sine';
+          if (isSuccess) {
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.15); // A5
+          } else {
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+          }
+
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.4);
+        } catch (e) {
+          // Audio autoplay policies or unsupported
+        }
+      }
+
+      /* -------------------------------------------------------------
+         Modal & Assignment CRUD
+         ------------------------------------------------------------- */
+      function openAddModal() {
+        modalTitle.textContent = 'Add Study Assignment';
+        editIdInput.value = '';
+        form.reset();
+        clearFormErrors();
+
+        // Lock minimum date to today in local timezone
+        const todayStr = getLocalDateString(0);
+        dateInput.min = todayStr;
+        dateInput.value = todayStr;
+        minutesInput.value = 50;
+
+        modalBackdrop.classList.add('open');
+        setTimeout(() => titleInput.focus(), 50);
+      }
+
+      function openEditModal(id) {
+        const assignment = state.assignments.find(a => a.id === id);
+        if (!assignment) return;
+
+        modalTitle.textContent = 'Edit Assignment';
+        editIdInput.value = assignment.id;
+        titleInput.value = assignment.title;
+        subjectInput.value = assignment.subject || 'Other';
+
+        // Lock minimum date to today
+        const todayStr = getLocalDateString(0);
+        dateInput.min = todayStr;
+        dateInput.value = assignment.dueDate;
+        minutesInput.value = assignment.estimatedMinutes;
+
+        clearFormErrors();
+        modalBackdrop.classList.add('open');
+        setTimeout(() => titleInput.focus(), 50);
+      }
+
+      function closeModal() {
+        modalBackdrop.classList.remove('open');
+        clearFormErrors();
+      }
+
+      function clearFormErrors() {
+        titleInput.classList.remove('error');
+        dateInput.classList.remove('error');
+        minutesInput.classList.remove('error');
+        titleError.classList.remove('visible');
+        dateError.classList.remove('visible');
+        minutesError.classList.remove('visible');
+      }
+
+      function handleSaveAssignment(e) {
+        e.preventDefault();
+        clearFormErrors();
+
+        const title = titleInput.value.trim();
+        const subject = subjectInput.value;
+        const dueDate = dateInput.value;
+        const minutes = parseInt(minutesInput.value, 10);
+        const editId = editIdInput.value;
+        const todayStr = getLocalDateString(0);
+
+        let isValid = true;
+
+        // Validation 1: Title not empty
+        if (!title) {
+          titleInput.classList.add('error');
+          titleError.classList.add('visible');
+          isValid = false;
+        }
+
+        // Validation 2: Due date not in past
+        if (!dueDate || dueDate < todayStr) {
+          dateInput.classList.add('error');
+          dateError.textContent = dueDate < todayStr 
+            ? `Deadline cannot be in the past (${dueDate} is before today ${todayStr}).`
+            : 'Please pick a valid due date.';
+          dateError.classList.add('visible');
+          isValid = false;
+        }
+
+        // Validation 3: Minutes must be positive integer
+        if (isNaN(minutes) || minutes <= 0) {
+          minutesInput.classList.add('error');
+          minutesError.classList.add('visible');
+          isValid = false;
+        }
+
+        if (!isValid) return;
+
+        if (editId) {
+          // Edit existing
+          const idx = state.assignments.findIndex(a => a.id === editId);
+          if (idx !== -1) {
+            state.assignments[idx] = {
+              ...state.assignments[idx],
+              title,
+              subject,
+              dueDate,
+              estimatedMinutes: minutes
+            };
+          }
+        } else {
+          // Create new
+          const newAssignment = {
+            id: 'asg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            title,
+            subject,
+            dueDate,
+            estimatedMinutes: minutes,
+            createdAt: Date.now()
+          };
+          state.assignments.push(newAssignment);
+        }
+
+        saveState();
+        closeModal();
+        updateUI();
+      }
+
+      function deleteAssignment(id) {
+        const assignment = state.assignments.find(a => a.id === id);
+        const title = assignment ? assignment.title : 'this assignment';
+        if (confirm(`Are you sure you want to delete "${title}"?`)) {
+          state.assignments = state.assignments.filter(a => a.id !== id);
+          // Clean up completed sprints keys for this assignment
+          Object.keys(state.completedSprints).forEach(k => {
+            if (k.startsWith(id + '-')) {
+              delete state.completedSprints[k];
+            }
+          });
+          saveState();
+          updateUI();
+        }
+      }
+
+      /* -------------------------------------------------------------
+         Welcome Guide Management
+         ------------------------------------------------------------- */
+      function showWelcomeGuide() {
+        welcomeGuide.style.display = 'block';
+      }
+
+      function dismissWelcomeGuide() {
+        welcomeGuide.style.display = 'none';
+        try {
+          localStorage.setItem(WELCOME_KEY, 'true');
+        } catch (e) {}
+      }
+
+      /* -------------------------------------------------------------
+         Example Data & Reset
+         ------------------------------------------------------------- */
+      function loadExampleData() {
+        const d0 = getLocalDateString(0); // Today
+        const d1 = getLocalDateString(1); // Tomorrow
+        const d3 = getLocalDateString(3); // In 3 days
+        const d5 = getLocalDateString(5); // In 5 days
+
+        state.assignments = [
+          {
+            id: 'asg_ex1',
+            title: 'Biology Lab Report: Osmosis Analysis',
+            subject: 'Science',
+            dueDate: d0, // Due Today!
+            estimatedMinutes: 50, // 2 sprints
+            createdAt: Date.now() - 3000
+          },
+          {
+            id: 'asg_ex2',
+            title: 'Calculus Problem Set #4 (Integrals)',
+            subject: 'Math',
+            dueDate: d1, // Due Tomorrow!
+            estimatedMinutes: 75, // 3 sprints
+            createdAt: Date.now() - 2000
+          },
+          {
+            id: 'asg_ex3',
+            title: 'History Essay Draft: Industrial Revolution',
+            subject: 'History',
+            dueDate: d3,
+            estimatedMinutes: 100, // 4 sprints
+            createdAt: Date.now() - 1000
+          },
+          {
+            id: 'asg_ex4',
+            title: 'Computer Science: Binary Search Trees',
+            subject: 'CS',
+            dueDate: d5,
+            estimatedMinutes: 60, // 3 sprints (25, 25, 10)
+            createdAt: Date.now()
+          }
+        ];
+
+        // Reset completed sprints
+        state.completedSprints = {};
+        // Mark first sprint of today's bio lab done as an example of progress
+        state.completedSprints['asg_ex1-0'] = true;
+
+        state.dailyAvailability = 100;
+        saveState();
+        updateUI();
+      }
+
+      function clearAllData() {
+        confirmBackdrop.classList.add('open');
+      }
+
+      function executeClearAll() {
+        state.assignments = [];
+        state.completedSprints = {};
+        state.dailyAvailability = 100;
+        resetTimer();
+        saveState();
+        confirmBackdrop.classList.remove('open');
+        updateUI();
+      }
+
+      /* -------------------------------------------------------------
+         Helpers & Utility
+         ------------------------------------------------------------- */
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getSubjectClass(subject) {
+        if (!subject) return 'default';
+        const s = subject.toLowerCase();
+        if (s.includes('math')) return 'math';
+        if (s.includes('sci') || s.includes('bio') || s.includes('chem') || s.includes('phys')) return 'science';
+        if (s.includes('lit') || s.includes('eng') || s.includes('lang')) return 'literature';
+        if (s.includes('hist') || s.includes('soc')) return 'history';
+        if (s.includes('cs') || s.includes('comp') || s.includes('tech') || s.includes('code')) return 'cs';
+        return 'default';
+      }
+
+      /* -------------------------------------------------------------
+         Event Listeners Initialization
+         ------------------------------------------------------------- */
+      // Welcome Guide events
+      document.getElementById('btnToggleGuide').addEventListener('click', () => {
+        if (welcomeGuide.style.display === 'none') {
+          showWelcomeGuide();
+          welcomeGuide.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          dismissWelcomeGuide();
+        }
+      });
+      document.getElementById('btnDismissWelcomeTop').addEventListener('click', dismissWelcomeGuide);
+      document.getElementById('btnDismissWelcome').addEventListener('click', dismissWelcomeGuide);
+      document.getElementById('btnWelcomeAdd').addEventListener('click', () => {
+        dismissWelcomeGuide();
+        openAddModal();
+      });
+      document.getElementById('btnWelcomeSample').addEventListener('click', () => {
+        dismissWelcomeGuide();
+        loadExampleData();
+      });
+
+      // Header Actions
+      document.getElementById('btnOpenAddModal').addEventListener('click', openAddModal);
+      document.getElementById('btnQuickAdd').addEventListener('click', openAddModal);
+      document.getElementById('btnEmptyAdd').addEventListener('click', openAddModal);
+      document.getElementById('btnEmptyExample').addEventListener('click', loadExampleData);
+      document.getElementById('btnTryExample').addEventListener('click', loadExampleData);
+      document.getElementById('btnClearAll').addEventListener('click', clearAllData);
+
+      // Modal Controls
+      document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+      document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+      form.addEventListener('submit', handleSaveAssignment);
+
+      // Confirm modal controls
+      document.getElementById('btnCloseConfirmModal').addEventListener('click', () => confirmBackdrop.classList.remove('open'));
+      document.getElementById('btnCancelConfirm').addEventListener('click', () => confirmBackdrop.classList.remove('open'));
+      document.getElementById('btnExecuteClearAll').addEventListener('click', executeClearAll);
+
+      // Close modals on Esc key
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+          confirmBackdrop.classList.remove('open');
+        }
+      });
+
+      // Close modal on click outside dialog
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+      });
+      confirmBackdrop.addEventListener('click', (e) => {
+        if (e.target === confirmBackdrop) confirmBackdrop.classList.remove('open');
+      });
+
+      // Quick minute presets in modal
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          minutesInput.value = btn.getAttribute('data-add');
+          minutesInput.classList.remove('error');
+          minutesError.classList.remove('visible');
+        });
+      });
+
+      // Availability slider & inputs
+      elAvailabilityRange.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        state.dailyAvailability = val;
+        saveState();
+        updateUI();
+      });
+
+      elAvailabilityInput.addEventListener('change', (e) => {
+        let val = parseInt(e.target.value, 10);
+        if (isNaN(val) || val < 10) val = 10;
+        if (val > 1440) val = 1440;
+        state.dailyAvailability = val;
+        saveState();
+        updateUI();
+      });
+
+      // Availability chips
+      document.querySelectorAll('.chip-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const val = parseInt(btn.getAttribute('data-val'), 10);
+          state.dailyAvailability = val;
+          saveState();
+          updateUI();
+        });
+      });
+
+      // Tabs: Today vs Timeline
+      const tabToday = document.getElementById('tabToday');
+      const tabTimeline = document.getElementById('tabTimeline');
+      const viewToday = document.getElementById('viewToday');
+      const viewTimeline = document.getElementById('viewTimeline');
+
+      tabToday.addEventListener('click', () => {
+        tabToday.classList.add('active');
+        tabToday.setAttribute('aria-selected', 'true');
+        tabTimeline.classList.remove('active');
+        tabTimeline.setAttribute('aria-selected', 'false');
+        viewToday.style.display = 'block';
+        viewTimeline.style.display = 'none';
+      });
+
+      tabTimeline.addEventListener('click', () => {
+        tabTimeline.classList.add('active');
+        tabTimeline.setAttribute('aria-selected', 'true');
+        tabToday.classList.remove('active');
+        tabToday.setAttribute('aria-selected', 'false');
+        viewToday.style.display = 'none';
+        viewTimeline.style.display = 'block';
+      });
+
+      /* -------------------------------------------------------------
+         Initialization
+         ------------------------------------------------------------- */
+      loadState();
+
+      // Check if first-time user: show welcome guide unless previously dismissed
+      const isDismissed = localStorage.getItem(WELCOME_KEY);
+      if (!isDismissed) {
+        showWelcomeGuide();
+      }
+
+      // Render the current state (starts clean with empty state for new users,
+      // or renders persisted user assignments)
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
